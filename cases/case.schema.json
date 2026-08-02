@@ -1,0 +1,844 @@
+{
+  "$defs": {
+    "AlwaysCondition": {
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "const": "always",
+          "default": "always",
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "title": "AlwaysCondition",
+      "type": "object"
+    },
+    "BehaviorRule": {
+      "additionalProperties": false,
+      "properties": {
+        "character_id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+          "title": "Character Id",
+          "type": "string"
+        },
+        "condition": {
+          "discriminator": {
+            "mapping": {
+              "always": "#/$defs/AlwaysCondition",
+              "contradiction_found": "#/$defs/ContradictionFoundCondition",
+              "evidence_presented": "#/$defs/EvidencePresentedCondition",
+              "fact_known": "#/$defs/FactKnownCondition"
+            },
+            "propertyName": "kind"
+          },
+          "oneOf": [
+            {
+              "$ref": "#/$defs/AlwaysCondition"
+            },
+            {
+              "$ref": "#/$defs/FactKnownCondition"
+            },
+            {
+              "$ref": "#/$defs/EvidencePresentedCondition"
+            },
+            {
+              "$ref": "#/$defs/ContradictionFoundCondition"
+            }
+          ],
+          "title": "Condition"
+        },
+        "id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "priority": {
+          "maximum": 10000,
+          "minimum": 0,
+          "title": "Priority",
+          "type": "integer"
+        },
+        "reveal_fact_ids": {
+          "default": [],
+          "items": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "title": "Reveal Fact Ids",
+          "type": "array"
+        },
+        "strategy": {
+          "$ref": "#/$defs/BehaviorStrategy"
+        }
+      },
+      "required": [
+        "id",
+        "character_id",
+        "priority",
+        "condition",
+        "strategy"
+      ],
+      "title": "BehaviorRule",
+      "type": "object"
+    },
+    "BehaviorStrategy": {
+      "enum": [
+        "cooperate",
+        "evade",
+        "deflect",
+        "deny",
+        "reveal",
+        "confess"
+      ],
+      "title": "BehaviorStrategy",
+      "type": "string"
+    },
+    "CaseManifestMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "author": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Author",
+          "type": "string"
+        },
+        "case_id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+          "title": "Case Id",
+          "type": "string"
+        },
+        "published_at": {
+          "format": "date-time",
+          "title": "Published At",
+          "type": "string"
+        },
+        "summary": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Summary",
+          "type": "string"
+        },
+        "title": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "version": {
+          "maxLength": 50,
+          "minLength": 1,
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "case_id",
+        "version",
+        "title",
+        "summary",
+        "author",
+        "published_at"
+      ],
+      "title": "CaseManifestMetadata",
+      "type": "object"
+    },
+    "Character": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "knowledge_grants": {
+          "default": [],
+          "items": {
+            "discriminator": {
+              "mapping": {
+                "evidence": "#/$defs/EvidenceKnowledgeGrant",
+                "fact": "#/$defs/FactKnowledgeGrant",
+                "timeline_event": "#/$defs/EventKnowledgeGrant"
+              },
+              "propertyName": "kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/$defs/FactKnowledgeGrant"
+              },
+              {
+                "$ref": "#/$defs/EvidenceKnowledgeGrant"
+              },
+              {
+                "$ref": "#/$defs/EventKnowledgeGrant"
+              }
+            ]
+          },
+          "title": "Knowledge Grants",
+          "type": "array"
+        },
+        "name": {
+          "maxLength": 150,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "private_motivation": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Private Motivation",
+          "type": "string"
+        },
+        "public_description": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Public Description",
+          "type": "string"
+        },
+        "role": {
+          "$ref": "#/$defs/CharacterRole"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "role",
+        "public_description",
+        "private_motivation"
+      ],
+      "title": "Character",
+      "type": "object"
+    },
+    "CharacterRole": {
+      "enum": [
+        "suspect",
+        "witness",
+        "victim",
+        "other"
+      ],
+      "title": "CharacterRole",
+      "type": "string"
+    },
+    "ContradictionFoundCondition": {
+      "additionalProperties": false,
+      "properties": {
+        "fact_id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+          "title": "Fact Id",
+          "type": "string"
+        },
+        "kind": {
+          "const": "contradiction_found",
+          "default": "contradiction_found",
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "fact_id"
+      ],
+      "title": "ContradictionFoundCondition",
+      "type": "object"
+    },
+    "EventKnowledgeGrant": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "kind": {
+          "const": "timeline_event",
+          "default": "timeline_event",
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id"
+      ],
+      "title": "EventKnowledgeGrant",
+      "type": "object"
+    },
+    "Evidence": {
+      "additionalProperties": false,
+      "properties": {
+        "available_during": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/TimeRange"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "description": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "kind": {
+          "$ref": "#/$defs/EvidenceKind"
+        },
+        "location_id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+          "title": "Location Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "reveals_fact_ids": {
+          "default": [],
+          "items": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "title": "Reveals Fact Ids",
+          "type": "array"
+        },
+        "unlocks_evidence_ids": {
+          "default": [],
+          "items": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "title": "Unlocks Evidence Ids",
+          "type": "array"
+        },
+        "visibility": {
+          "$ref": "#/$defs/Visibility",
+          "default": "discoverable"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description",
+        "kind",
+        "location_id"
+      ],
+      "title": "Evidence",
+      "type": "object"
+    },
+    "EvidenceKind": {
+      "enum": [
+        "physical",
+        "document",
+        "digital",
+        "testimony"
+      ],
+      "title": "EvidenceKind",
+      "type": "string"
+    },
+    "EvidenceKnowledgeGrant": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "kind": {
+          "const": "evidence",
+          "default": "evidence",
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidence_id"
+      ],
+      "title": "EvidenceKnowledgeGrant",
+      "type": "object"
+    },
+    "EvidencePresentedCondition": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "kind": {
+          "const": "evidence_presented",
+          "default": "evidence_presented",
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "evidence_id"
+      ],
+      "title": "EvidencePresentedCondition",
+      "type": "object"
+    },
+    "Fact": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "statement": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Statement",
+          "type": "string"
+        },
+        "visibility": {
+          "$ref": "#/$defs/Visibility",
+          "default": "hidden"
+        }
+      },
+      "required": [
+        "id",
+        "statement"
+      ],
+      "title": "Fact",
+      "type": "object"
+    },
+    "FactKnowledgeGrant": {
+      "additionalProperties": false,
+      "properties": {
+        "fact_id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+          "title": "Fact Id",
+          "type": "string"
+        },
+        "kind": {
+          "const": "fact",
+          "default": "fact",
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "fact_id"
+      ],
+      "title": "FactKnowledgeGrant",
+      "type": "object"
+    },
+    "FactKnownCondition": {
+      "additionalProperties": false,
+      "properties": {
+        "fact_id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+          "title": "Fact Id",
+          "type": "string"
+        },
+        "kind": {
+          "const": "fact_known",
+          "default": "fact_known",
+          "title": "Kind",
+          "type": "string"
+        }
+      },
+      "required": [
+        "fact_id"
+      ],
+      "title": "FactKnownCondition",
+      "type": "object"
+    },
+    "Hint": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "points_to_evidence_ids": {
+          "default": [],
+          "items": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "title": "Points To Evidence Ids",
+          "type": "array"
+        },
+        "requires_fact_ids": {
+          "default": [],
+          "items": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "title": "Requires Fact Ids",
+          "type": "array"
+        },
+        "text": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Text",
+          "type": "string"
+        },
+        "tier": {
+          "$ref": "#/$defs/HintTier"
+        }
+      },
+      "required": [
+        "id",
+        "tier",
+        "text"
+      ],
+      "title": "Hint",
+      "type": "object"
+    },
+    "HintTier": {
+      "enum": [
+        "nudge",
+        "direct",
+        "explicit"
+      ],
+      "title": "HintTier",
+      "type": "string"
+    },
+    "Location": {
+      "additionalProperties": false,
+      "properties": {
+        "description": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 150,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "visibility": {
+          "$ref": "#/$defs/Visibility",
+          "default": "discoverable"
+        }
+      },
+      "required": [
+        "id",
+        "name",
+        "description"
+      ],
+      "title": "Location",
+      "type": "object"
+    },
+    "RubricCriterion": {
+      "additionalProperties": false,
+      "properties": {
+        "category": {
+          "$ref": "#/$defs/SupportCategory"
+        },
+        "description": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "supporting_evidence_ids": {
+          "items": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Supporting Evidence Ids",
+          "type": "array"
+        },
+        "weight": {
+          "default": 1,
+          "maximum": 100,
+          "minimum": 1,
+          "title": "Weight",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "id",
+        "category",
+        "description",
+        "supporting_evidence_ids"
+      ],
+      "title": "RubricCriterion",
+      "type": "object"
+    },
+    "SolutionRubric": {
+      "additionalProperties": false,
+      "properties": {
+        "criteria": {
+          "items": {
+            "$ref": "#/$defs/RubricCriterion"
+          },
+          "minItems": 1,
+          "title": "Criteria",
+          "type": "array"
+        },
+        "culprit_character_id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+          "title": "Culprit Character Id",
+          "type": "string"
+        },
+        "explanation": {
+          "maxLength": 4000,
+          "minLength": 1,
+          "title": "Explanation",
+          "type": "string"
+        },
+        "minimum_score": {
+          "minimum": 1,
+          "title": "Minimum Score",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "culprit_character_id",
+        "explanation",
+        "criteria",
+        "minimum_score"
+      ],
+      "title": "SolutionRubric",
+      "type": "object"
+    },
+    "SupportCategory": {
+      "enum": [
+        "motive",
+        "means",
+        "opportunity",
+        "contradiction",
+        "identity"
+      ],
+      "title": "SupportCategory",
+      "type": "string"
+    },
+    "TimeRange": {
+      "additionalProperties": false,
+      "properties": {
+        "end": {
+          "format": "date-time",
+          "title": "End",
+          "type": "string"
+        },
+        "start": {
+          "format": "date-time",
+          "title": "Start",
+          "type": "string"
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "title": "TimeRange",
+      "type": "object"
+    },
+    "TimelineEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "actor_ids": {
+          "default": [],
+          "items": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+            "type": "string"
+          },
+          "title": "Actor Ids",
+          "type": "array"
+        },
+        "description": {
+          "maxLength": 2000,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+          "title": "Id",
+          "type": "string"
+        },
+        "location_id": {
+          "maxLength": 100,
+          "minLength": 1,
+          "pattern": "^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$",
+          "title": "Location Id",
+          "type": "string"
+        },
+        "time_range": {
+          "$ref": "#/$defs/TimeRange"
+        },
+        "title": {
+          "maxLength": 200,
+          "minLength": 1,
+          "title": "Title",
+          "type": "string"
+        },
+        "visibility": {
+          "$ref": "#/$defs/Visibility",
+          "default": "hidden"
+        }
+      },
+      "required": [
+        "id",
+        "title",
+        "description",
+        "time_range",
+        "location_id"
+      ],
+      "title": "TimelineEvent",
+      "type": "object"
+    },
+    "Visibility": {
+      "enum": [
+        "public",
+        "discoverable",
+        "hidden"
+      ],
+      "title": "Visibility",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "behavior_rules": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/BehaviorRule"
+      },
+      "title": "Behavior Rules",
+      "type": "array"
+    },
+    "characters": {
+      "items": {
+        "$ref": "#/$defs/Character"
+      },
+      "minItems": 1,
+      "title": "Characters",
+      "type": "array"
+    },
+    "evidence": {
+      "items": {
+        "$ref": "#/$defs/Evidence"
+      },
+      "minItems": 1,
+      "title": "Evidence",
+      "type": "array"
+    },
+    "facts": {
+      "items": {
+        "$ref": "#/$defs/Fact"
+      },
+      "minItems": 1,
+      "title": "Facts",
+      "type": "array"
+    },
+    "hints": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/Hint"
+      },
+      "title": "Hints",
+      "type": "array"
+    },
+    "locations": {
+      "items": {
+        "$ref": "#/$defs/Location"
+      },
+      "minItems": 1,
+      "title": "Locations",
+      "type": "array"
+    },
+    "metadata": {
+      "$ref": "#/$defs/CaseManifestMetadata"
+    },
+    "solution": {
+      "$ref": "#/$defs/SolutionRubric"
+    },
+    "timeline": {
+      "items": {
+        "$ref": "#/$defs/TimelineEvent"
+      },
+      "minItems": 1,
+      "title": "Timeline",
+      "type": "array"
+    }
+  },
+  "required": [
+    "metadata",
+    "locations",
+    "characters",
+    "facts",
+    "evidence",
+    "timeline",
+    "solution"
+  ],
+  "title": "CaseManifest",
+  "type": "object"
+}

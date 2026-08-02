@@ -1,0 +1,1 @@
+"""AI Detective backend application."""
