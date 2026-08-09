@@ -69,6 +69,11 @@ class Location(StrictFrozenModel):
     description: str = Field(min_length=1, max_length=2_000)
     visibility: Visibility = Visibility.DISCOVERABLE
 
+class TravelConstraint(StrictFrozenModel):
+    from_location_id: LocationID
+    to_location_id: LocationID
+    minimum_minutes: int = Field(ge=0, le=1_440)
+
 
 class Fact(StrictFrozenModel):
     id: FactID
@@ -206,6 +211,7 @@ class SolutionRubric(StrictFrozenModel):
 class CaseManifest(StrictFrozenModel):
     metadata: CaseManifestMetadata
     locations: tuple[Location, ...] = Field(min_length=1)
+    travel_constraints: tuple[TravelConstraint, ...] = ()
     characters: tuple[Character, ...] = Field(min_length=1)
     facts: tuple[Fact, ...] = Field(min_length=1)
     evidence: tuple[Evidence, ...] = Field(min_length=1)
@@ -213,197 +219,6 @@ class CaseManifest(StrictFrozenModel):
     behavior_rules: tuple[BehaviorRule, ...] = ()
     hints: tuple[Hint, ...] = ()
     solution: SolutionRubric
-
-    @model_validator(mode="after")
-    def validate_ids_and_references(self) -> Self:
-        location_ids = self._unique_ids("locations", self.locations)
-        character_ids = self._unique_ids("characters", self.characters)
-        fact_ids = self._unique_ids("facts", self.facts)
-        evidence_ids = self._unique_ids("evidence", self.evidence)
-        event_ids = self._unique_ids("timeline", self.timeline)
-        self._unique_ids("behavior_rules", self.behavior_rules)
-        self._unique_ids("hints", self.hints)
-        self._unique_ids("solution.criteria", self.solution.criteria)
-
-        for character in self.characters:
-            for grant in character.knowledge_grants:
-                if isinstance(grant, FactKnowledgeGrant):
-                    self._require_reference(
-                        source=f"character '{character.id}' knowledge grant",
-                        field="fact_id",
-                        value=grant.fact_id,
-                        valid_ids=fact_ids,
-                    )
-                elif isinstance(grant, EvidenceKnowledgeGrant):
-                    self._require_reference(
-                        source=f"character '{character.id}' knowledge grant",
-                        field="evidence_id",
-                        value=grant.evidence_id,
-                        valid_ids=evidence_ids,
-                    )
-                else:
-                    self._require_reference(
-                        source=f"character '{character.id}' knowledge grant",
-                        field="event_id",
-                        value=grant.event_id,
-                        valid_ids=event_ids,
-                    )
-
-        for event in self.timeline:
-            self._require_reference(
-                source=f"timeline event '{event.id}'",
-                field="location_id",
-                value=event.location_id,
-                valid_ids=location_ids,
-            )
-
-            for actor_id in event.actor_ids:
-                self._require_reference(
-                    source=f"timeline event '{event.id}'",
-                    field="actor_ids",
-                    value=actor_id,
-                    valid_ids=character_ids,
-                )
-
-        for item in self.evidence:
-            self._require_reference(
-                source=f"evidence '{item.id}'",
-                field="location_id",
-                value=item.location_id,
-                valid_ids=location_ids,
-            )
-
-            self._require_references(
-                source=f"evidence '{item.id}'",
-                field="reveals_fact_ids",
-                values=item.reveals_fact_ids,
-                valid_ids=fact_ids,
-            )
-
-            self._require_references(
-                source=f"evidence '{item.id}'",
-                field="unlocks_evidence_ids",
-                values=item.unlocks_evidence_ids,
-                valid_ids=evidence_ids,
-            )
-
-            if item.id in item.unlocks_evidence_ids:
-                raise ValueError(f"evidence '{item.id}' cannot unlock itself")
-
-        for rule in self.behavior_rules:
-            self._require_reference(
-                source=f"behavior rule '{rule.id}'",
-                field="character_id",
-                value=rule.character_id,
-                valid_ids=character_ids,
-            )
-
-            self._require_references(
-                source=f"behavior rule '{rule.id}'",
-                field="reveal_fact_ids",
-                values=rule.reveal_fact_ids,
-                valid_ids=fact_ids,
-            )
-
-            if isinstance(rule.condition, FactKnownCondition):
-                self._require_reference(
-                    source=f"behavior rule '{rule.id}' condition",
-                    field="fact_id",
-                    value=rule.condition.fact_id,
-                    valid_ids=fact_ids,
-                )
-            elif isinstance(rule.condition, EvidencePresentedCondition):
-                self._require_reference(
-                    source=f"behavior rule '{rule.id}' condition",
-                    field="evidence_id",
-                    value=rule.condition.evidence_id,
-                    valid_ids=evidence_ids,
-                )
-            elif isinstance(rule.condition, ContradictionFoundCondition):
-                self._require_reference(
-                    source=f"behavior rule '{rule.id}' condition",
-                    field="fact_id",
-                    value=rule.condition.fact_id,
-                    valid_ids=fact_ids,
-                )
-
-        for hint in self.hints:
-            self._require_references(
-                source=f"hint '{hint.id}'",
-                field="requires_fact_ids",
-                values=hint.requires_fact_ids,
-                valid_ids=fact_ids,
-            )
-
-            self._require_references(
-                source=f"hint '{hint.id}'",
-                field="points_to_evidence_ids",
-                values=hint.points_to_evidence_ids,
-                valid_ids=evidence_ids,
-            )
-
-        self._require_reference(
-            source="solution rubric",
-            field="culprit_character_id",
-            value=self.solution.culprit_character_id,
-            valid_ids=character_ids,
-        )
-
-        for criterion in self.solution.criteria:
-            self._require_references(
-                source=f"solution criterion '{criterion.id}'",
-                field="supporting_evidence_ids",
-                values=criterion.supporting_evidence_ids,
-                valid_ids=evidence_ids,
-            )
-
-        return self
-
-    @staticmethod
-    def _unique_ids(collection_name: str, items: tuple[object, ...]) -> set[str]:
-        seen: set[str] = set()
-
-        for item in items:
-            item_id = getattr(item, "id")
-
-            if item_id in seen:
-                raise ValueError(
-                    f"duplicate id '{item_id}' in collection '{collection_name}'"
-                )
-
-            seen.add(item_id)
-
-        return seen
-
-    @staticmethod
-    def _require_reference(
-        *,
-        source: str,
-        field: str,
-        value: str,
-        valid_ids: set[str],
-    ) -> None:
-        if value not in valid_ids:
-            raise ValueError(
-                f"{source} has unknown {field} reference '{value}'"
-            )
-
-    @classmethod
-    def _require_references(
-        cls,
-        *,
-        source: str,
-        field: str,
-        values: tuple[str, ...],
-        valid_ids: set[str],
-    ) -> None:
-        for value in values:
-            cls._require_reference(
-                source=source,
-                field=field,
-                value=value,
-                valid_ids=valid_ids,
-            )
 
 
 def case_to_json(case: CaseManifest) -> str:
