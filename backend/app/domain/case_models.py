@@ -69,6 +69,7 @@ class Location(StrictFrozenModel):
     description: str = Field(min_length=1, max_length=2_000)
     visibility: Visibility = Visibility.DISCOVERABLE
 
+
 class TravelConstraint(StrictFrozenModel):
     from_location_id: LocationID
     to_location_id: LocationID
@@ -143,16 +144,16 @@ class FactKnownCondition(StrictFrozenModel):
 
 
 class EvidencePresentedCondition(StrictFrozenModel):
-    kind: Literal[
+    kind: Literal[BehaviorCondition.EVIDENCE_PRESENTED] = (
         BehaviorCondition.EVIDENCE_PRESENTED
-    ] = BehaviorCondition.EVIDENCE_PRESENTED
+    )
     evidence_id: EvidenceID
 
 
 class ContradictionFoundCondition(StrictFrozenModel):
-    kind: Literal[
+    kind: Literal[BehaviorCondition.CONTRADICTION_FOUND] = (
         BehaviorCondition.CONTRADICTION_FOUND
-    ] = BehaviorCondition.CONTRADICTION_FOUND
+    )
     fact_id: FactID
 
 

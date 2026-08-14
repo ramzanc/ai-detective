@@ -10,11 +10,8 @@ DOMAIN_ID_PATTERN = r"^[a-z][a-z0-9]*(?:_[a-z0-9]+)*$"
 DomainID = Annotated[
     str,
     StringConstraints(
-        strip_whitespace=True,
-        min_length=1,
-        max_length=100,
-        pattern=DOMAIN_ID_PATTERN
-    )
+        strip_whitespace=True, min_length=1, max_length=100, pattern=DOMAIN_ID_PATTERN
+    ),
 ]
 
 CaseID = DomainID
@@ -46,16 +43,15 @@ class StrictFrozenModel(BaseModel):
     """
 
     model_config = ConfigDict(
-        extra="forbid",
-        frozen=True,
-        validate_assignment=True,
-        str_strip_whitespace=True
+        extra="forbid", frozen=True, validate_assignment=True, str_strip_whitespace=True
     )
+
 
 class Visibility(StrEnum):
     PUBLIC = "public"
     DISCOVERABLE = "discoverable"
     HIDDEN = "hidden"
+
 
 class CharacterRole(StrEnum):
     SUSPECT = "suspect"
@@ -63,11 +59,13 @@ class CharacterRole(StrEnum):
     VICTIM = "victim"
     OTHER = "other"
 
+
 class EvidenceKind(StrEnum):
     PHYSICAL = "physical"
     DOCUMENT = "document"
     DIGITAL = "digital"
     TESTIMONY = "testimony"
+
 
 class BehaviorStrategy(StrEnum):
     COOPERATE = "cooperate"
@@ -77,16 +75,19 @@ class BehaviorStrategy(StrEnum):
     REVEAL = "reveal"
     CONFESS = "confess"
 
+
 class BehaviorCondition(StrEnum):
     ALWAYS = "always"
     FACT_KNOWN = "fact_known"
     EVIDENCE_PRESENTED = "evidence_presented"
     CONTRADICTION_FOUND = "contradiction_found"
 
+
 class HintTier(StrEnum):
     NUDGE = "nudge"
     DIRECT = "direct"
     EXPLICIT = "explicit"
+
 
 class SupportCategory(StrEnum):
     MOTIVE = "motive"

@@ -29,14 +29,10 @@ def test_duplicate_id_is_rejected() -> None:
     case = make_valid_case()
     evidence = list(case.evidence)
 
-    duplicate = evidence[0].model_copy(
-        update={"name": "Duplicate watch"}
-    )
+    duplicate = evidence[0].model_copy(update={"name": "Duplicate watch"})
     evidence.append(duplicate)
 
-    invalid_case = case.model_copy(
-        update={"evidence": tuple(evidence)}
-    )
+    invalid_case = case.model_copy(update={"evidence": tuple(evidence)})
 
     report = validate_case(invalid_case)
 
@@ -44,9 +40,7 @@ def test_duplicate_id_is_rejected() -> None:
     assert report.has_code(ValidationCode.DUPLICATE_ID)
 
     issue = next(
-        issue
-        for issue in report.issues
-        if issue.code == ValidationCode.DUPLICATE_ID
+        issue for issue in report.issues if issue.code == ValidationCode.DUPLICATE_ID
     )
 
     assert issue.path == "$.evidence[3].id"
@@ -57,13 +51,9 @@ def test_unknown_reference_is_rejected() -> None:
     case = make_valid_case()
     evidence = list(case.evidence)
 
-    evidence[0] = evidence[0].model_copy(
-        update={"location_id": "missing_location"}
-    )
+    evidence[0] = evidence[0].model_copy(update={"location_id": "missing_location"})
 
-    invalid_case = case.model_copy(
-        update={"evidence": tuple(evidence)}
-    )
+    invalid_case = case.model_copy(update={"evidence": tuple(evidence)})
 
     report = validate_case(invalid_case)
 
@@ -82,9 +72,7 @@ def test_unknown_reference_is_rejected() -> None:
 def test_timeline_must_be_authored_in_chronological_order() -> None:
     case = make_valid_case()
 
-    invalid_case = case.model_copy(
-        update={"timeline": tuple(reversed(case.timeline))}
-    )
+    invalid_case = case.model_copy(update={"timeline": tuple(reversed(case.timeline))})
 
     report = validate_case(invalid_case)
 
@@ -105,9 +93,7 @@ def test_actor_cannot_appear_in_overlapping_events() -> None:
         }
     )
 
-    invalid_case = case.model_copy(
-        update={"timeline": tuple(timeline)}
-    )
+    invalid_case = case.model_copy(update={"timeline": tuple(timeline)})
 
     report = validate_case(invalid_case)
 
@@ -128,9 +114,7 @@ def test_actor_must_have_enough_travel_time() -> None:
         }
     )
 
-    invalid_case = case.model_copy(
-        update={"timeline": tuple(timeline)}
-    )
+    invalid_case = case.model_copy(update={"timeline": tuple(timeline)})
 
     report = validate_case(invalid_case)
 
@@ -147,15 +131,11 @@ def test_evidence_cannot_unlock_itself() -> None:
         }
     )
 
-    invalid_case = case.model_copy(
-        update={"evidence": tuple(evidence)}
-    )
+    invalid_case = case.model_copy(update={"evidence": tuple(evidence)})
 
     report = validate_case(invalid_case)
 
-    assert report.has_code(
-        ValidationCode.EVIDENCE_UNLOCKS_ITSELF
-    )
+    assert report.has_code(ValidationCode.EVIDENCE_UNLOCKS_ITSELF)
 
 
 def test_unlock_cycle_is_rejected() -> None:
@@ -180,16 +160,12 @@ def test_unlock_cycle_is_rejected() -> None:
         }
     )
 
-    invalid_case = case.model_copy(
-        update={"evidence": tuple(evidence)}
-    )
+    invalid_case = case.model_copy(update={"evidence": tuple(evidence)})
 
     report = validate_case(invalid_case)
 
     cycle_issues = [
-        issue
-        for issue in report.issues
-        if issue.code == ValidationCode.UNLOCK_CYCLE
+        issue for issue in report.issues if issue.code == ValidationCode.UNLOCK_CYCLE
     ]
 
     assert len(cycle_issues) == 3
@@ -205,19 +181,13 @@ def test_required_hidden_evidence_must_be_reachable() -> None:
         }
     )
 
-    invalid_case = case.model_copy(
-        update={"evidence": tuple(evidence)}
-    )
+    invalid_case = case.model_copy(update={"evidence": tuple(evidence)})
 
     report = validate_case(invalid_case)
 
-    assert report.has_code(
-        ValidationCode.REQUIRED_EVIDENCE_UNREACHABLE
-    )
+    assert report.has_code(ValidationCode.REQUIRED_EVIDENCE_UNREACHABLE)
 
-    assert report.has_code(
-        ValidationCode.RUBRIC_EVIDENCE_NOT_DISCOVERABLE
-    )
+    assert report.has_code(ValidationCode.RUBRIC_EVIDENCE_NOT_DISCOVERABLE)
 
 
 def test_hidden_evidence_can_be_unlocked() -> None:
@@ -236,44 +206,30 @@ def test_hidden_evidence_can_be_unlocked() -> None:
         }
     )
 
-    invalid_case = case.model_copy(
-        update={"evidence": tuple(evidence)}
-    )
+    invalid_case = case.model_copy(update={"evidence": tuple(evidence)})
 
     report = validate_case(invalid_case)
 
-    assert not report.has_code(
-        ValidationCode.REQUIRED_EVIDENCE_UNREACHABLE
-    )
+    assert not report.has_code(ValidationCode.REQUIRED_EVIDENCE_UNREACHABLE)
 
-    assert not report.has_code(
-        ValidationCode.RUBRIC_EVIDENCE_NOT_DISCOVERABLE
-    )
+    assert not report.has_code(ValidationCode.RUBRIC_EVIDENCE_NOT_DISCOVERABLE)
 
 
 def test_solution_requires_three_support_categories() -> None:
     case = make_valid_case()
 
     criteria = tuple(
-        criterion.model_copy(
-            update={"category": "identity"}
-        )
+        criterion.model_copy(update={"category": "identity"})
         for criterion in case.solution.criteria
     )
 
-    solution = case.solution.model_copy(
-        update={"criteria": criteria}
-    )
+    solution = case.solution.model_copy(update={"criteria": criteria})
 
-    invalid_case = case.model_copy(
-        update={"solution": solution}
-    )
+    invalid_case = case.model_copy(update={"solution": solution})
 
     report = validate_case(invalid_case)
 
-    assert report.has_code(
-        ValidationCode.RUBRIC_INSUFFICIENT_CATEGORIES
-    )
+    assert report.has_code(ValidationCode.RUBRIC_INSUFFICIENT_CATEGORIES)
 
 
 def test_validation_order_is_deterministic() -> None:
@@ -287,9 +243,7 @@ def test_validation_order_is_deterministic() -> None:
         }
     )
 
-    invalid_case = case.model_copy(
-        update={"evidence": tuple(evidence)}
-    )
+    invalid_case = case.model_copy(update={"evidence": tuple(evidence)})
 
     validator = CaseValidator()
 

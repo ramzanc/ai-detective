@@ -12,14 +12,16 @@ from app.domain.case_models import (
     CaseManifest,
     ContradictionFoundCondition,
     EvidencePresentedCondition,
-    FactKnownCondition
+    FactKnownCondition,
 )
 
 from app.domain.types import Visibility
 
+
 class ValidationSeverity(StrEnum):
     ERROR = "error"
     WARNING = "warning"
+
 
 class ValidationCode(StrEnum):
     DUPLICATE_ID = "duplicate_id"
@@ -36,6 +38,7 @@ class ValidationCode(StrEnum):
     RUBRIC_INSUFFICIENT_CATEGORIES = "rubric_insufficient_categories"
     RUBRIC_EVIDENCE_NOT_DISCOVERABLE = "rubric_evidence_not_discoverable"
 
+
 class ValidationIssue(BaseModel):
     model_config = ConfigDict(
         extra="forbid",
@@ -46,6 +49,7 @@ class ValidationIssue(BaseModel):
     severity: ValidationSeverity
     path: str = Field(min_length=1)
     message: str = Field(min_length=1)
+
 
 class ValidationReport(BaseModel):
     model_config = ConfigDict(
@@ -58,16 +62,13 @@ class ValidationReport(BaseModel):
     @property
     def is_publishable(self) -> bool:
         return not any(
-            issue.severity == ValidationSeverity.ERROR
-            for issue in self.issues
+            issue.severity == ValidationSeverity.ERROR for issue in self.issues
         )
 
     @property
     def errors(self) -> tuple[ValidationIssue, ...]:
         return tuple(
-            issue
-            for issue in self.issues
-            if issue.severity == ValidationSeverity.ERROR
+            issue for issue in self.issues if issue.severity == ValidationSeverity.ERROR
         )
 
     @property
@@ -111,21 +112,14 @@ class CaseValidator:
         code: ValidationCode,
         path: str,
         message: str,
-        severity: ValidationSeverity = ValidationSeverity.ERROR
+        severity: ValidationSeverity = ValidationSeverity.ERROR,
     ) -> None:
         issues.append(
-            ValidationIssue(
-                code=code,
-                severity=severity,
-                path=path,
-                message=message
-            )
+            ValidationIssue(code=code, severity=severity, path=path, message=message)
         )
 
     def _validate_unique_ids(
-        self,
-        case: CaseManifest,
-        issues: list[ValidationIssue]
+        self, case: CaseManifest, issues: list[ValidationIssue]
     ) -> None:
         collections: tuple[tuple[str, tuple[object, ...]], ...] = (
             ("locations", case.locations),
@@ -135,7 +129,7 @@ class CaseValidator:
             ("timeline", case.timeline),
             ("behavior_rules", case.behavior_rules),
             ("hints", case.hints),
-            ("solution.criteria", case.solution.criteria)
+            ("solution.criteria", case.solution.criteria),
         )
 
         for collection_path, items in collections:
@@ -154,15 +148,13 @@ class CaseValidator:
                         message=(
                             f"ID '{item_id} duplicates "
                             f"$.{collection_path}[{first_index}].id"
-                        )
+                        ),
                     )
                 else:
                     seen[item_id] = index
 
     def _validate_references(
-        self,
-        case: CaseManifest,
-        issues: list[ValidationIssue]
+        self, case: CaseManifest, issues: list[ValidationIssue]
     ) -> None:
         location_ids = {location.id for location in case.locations}
         character_ids = {character.id for character in case.characters}
@@ -191,8 +183,7 @@ class CaseValidator:
         for character_index, character in enumerate(case.characters):
             for grant_index, grant in enumerate(character.knowledge_grants):
                 grant_path = (
-                    f"$.characters[{character_index}]"
-                    f".knowledge_grants[{grant_index}]"
+                    f"$.characters[{character_index}].knowledge_grants[{grant_index}]"
                 )
 
                 if grant.kind == "fact":
@@ -335,7 +326,9 @@ class CaseValidator:
         )
 
         for criterion_index, criterion in enumerate(case.solution.criteria):
-            for evidence_index, evidence_id in enumerate(criterion.supporting_evidence_ids):
+            for evidence_index, evidence_id in enumerate(
+                criterion.supporting_evidence_ids
+            ):
                 self._require_reference(
                     issues,
                     value=evidence_id,
@@ -345,9 +338,7 @@ class CaseValidator:
                 )
 
     def _validate_timeline_order(
-        self,
-        case: CaseManifest,
-        issues: list[ValidationIssue]
+        self, case: CaseManifest, issues: list[ValidationIssue]
     ) -> None:
         for index in range(1, len(case.timeline)):
             previous = case.timeline[index - 1]
@@ -376,9 +367,7 @@ class CaseValidator:
 
         for event_index, event in enumerate(case.timeline):
             for actor_id in event.actor_ids:
-                events_by_actor[actor_id].append(
-                    (event_index, event)
-                )
+                events_by_actor[actor_id].append((event_index, event))
 
         travel_minutes = self._travel_lookup(case)
 
@@ -388,9 +377,9 @@ class CaseValidator:
                 key=lambda item: (
                     item[1].time_range.start,
                     item[1].time_range.end,
-                    item[1].id
-                )
-            ) 
+                    item[1].id,
+                ),
+            )
 
             for pair_index in range(1, len(actor_events)):
                 previous_index, previous = actor_events[pair_index - 1]
@@ -420,9 +409,8 @@ class CaseValidator:
                 if required_minutes is None:
                     continue
 
-                earliest_arrival = (
-                    previous.time_range.end
-                    + timedelta(minutes=required_minutes)
+                earliest_arrival = previous.time_range.end + timedelta(
+                    minutes=required_minutes
                 )
 
                 if current.time_range.start < earliest_arrival:
@@ -444,12 +432,12 @@ class CaseValidator:
                     )
 
     def _validate_unlock_graph(
-        self,
-        case: CaseManifest,
-        issues: list[ValidationIssue]
+        self, case: CaseManifest, issues: list[ValidationIssue]
     ) -> None:
         evidence_by_id = {evidence.id: evidence for evidence in case.evidence}
-        evidence_index = {evidence.id: index for index, evidence in enumerate(case.evidence)}
+        evidence_index = {
+            evidence.id: index for index, evidence in enumerate(case.evidence)
+        }
 
         graph: dict[str, tuple[str, ...]] = {}
 
@@ -497,7 +485,9 @@ class CaseValidator:
             if evidence_id in evidence_by_id
         }
 
-        for evidence_id in sorted(required_evidence, key=lambda item: evidence_index[item]):
+        for evidence_id in sorted(
+            required_evidence, key=lambda item: evidence_index[item]
+        ):
             if evidence_id not in reachable:
                 index = evidence_index[evidence_id]
                 self._add_issue(
@@ -516,10 +506,7 @@ class CaseValidator:
         case: CaseManifest,
         issues: list[ValidationIssue],
     ) -> None:
-        categories = {
-            criterion.category
-            for criterion in case.solution.criteria
-        }
+        categories = {criterion.category for criterion in case.solution.criteria}
 
         if len(categories) < 3:
             self._add_issue(
@@ -551,7 +538,9 @@ class CaseValidator:
         )
 
         for criterion_index, criterion in enumerate(case.solution.criteria):
-            for evidence_index, evidence_id in enumerate(criterion.supporting_evidence_ids):
+            for evidence_index, evidence_id in enumerate(
+                criterion.supporting_evidence_ids
+            ):
                 if evidence_id not in evidence_by_id:
                     continue
 
@@ -630,9 +619,7 @@ class CaseValidator:
         return reachable
 
     @staticmethod
-    def _find_cycle_nodes(
-        graph: dict[str, tuple[str, ...]]
-    ) -> set[str]:
+    def _find_cycle_nodes(graph: dict[str, tuple[str, ...]]) -> set[str]:
         """
         Return every node that participates in at least one directed cycle.
 
@@ -680,6 +667,7 @@ class CaseValidator:
                 issue.message,
             ),
         )
+
 
 def validate_case(case: CaseManifest) -> ValidationReport:
     """Convenience entry point for callers that do not need a validator object."""
